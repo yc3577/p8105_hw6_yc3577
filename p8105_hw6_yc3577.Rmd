@@ -1,0 +1,228 @@
+---
+title: "p8105_hw6_yc3577"
+author: "Yimeng Cai"
+date: "11/30/2023"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(readr)
+library(ggplot2)
+library(broom)
+library(modelr)
+library(mgcv)
+library(purrr)
+library(dplyr)
+library(stats)
+```
+
+
+Problem 2
+For this problem, we’ll use the Central Park weather data similar to data we’ve seen elsewhere. The code chunk below (adapted from the course website) will download these data.
+
+First, we need to load in the data. 
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2022-01-01",
+    date_max = "2022-12-31") |>
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) |>
+  select(name, id, everything())
+
+weather_df
+```
+The boostrap is helpful when you’d like to perform inference for a parameter / value / summary that doesn’t have an easy-to-write-down distribution in the usual repeated sampling framework. We’ll focus on a simple linear regression with tmax as the response with tmin and prcp as the predictors, and are interested in the distribution of two quantities estimated from these data:
+- r̂^ 2
+- log(β̂ 1∗β̂ 2)
+Use 5000 bootstrap samples and, for each bootstrap sample, produce estimates of these two quantities. 
+```{r}
+bootstrap_sample = function(data) {
+  sample_frac(data, replace = TRUE)
+}
+
+
+bootstrap_results1 = 
+  tibble(number = 1:5000) |>
+  mutate(
+    sample = map(number, \(i) bootstrap_sample(weather_df)),
+    models = map(sample, \(df) lm(tmax ~ tmin + prcp, data = df)),
+    results = map(models, broom::tidy),
+    r_squared = map_dbl(models, \(model) summary(model)$r.squared)) |> 
+  select(-models) |> 
+  unnest(results) 
+
+bootstrap_results1
+
+bootstrap_results2 =
+  bootstrap_results1 |>
+  group_by(term) |>
+  select(number, term, estimate, r_squared) |>
+  pivot_wider(
+    names_from = term,
+    values_from = estimate
+  ) |>
+  mutate(
+    log_beta = log(tmin * prcp)
+  )
+
+bootstrap_results2
+  
+```
+Plot the distribution of your estimates, and describe these in words.
+
+```{r}
+# Then we need to draw the distribution of log_beta
+
+beta_dist =
+  bootstrap_results2 |>
+  ggplot(aes(x = log_beta)) +
+  geom_density(color = 'pink') +
+  theme_minimal() +
+  labs(
+    x = 'Log Beta estimate',
+    y = 'Strap Number',
+    title = 'Distribution of Log beta'
+  )
+
+beta_dist
+
+hist(bootstrap_results2$log_beta, main = "Distribution of Log beta", xlab = "Log beta", col = "pink")
+```
+
+
+
+
+
+```{r}
+# Then we need to draw the distribution of r^2
+
+rsquared_dist =
+  bootstrap_results2 |>
+  ggplot(aes(x = r_squared)) +
+  geom_density(color = 'skyblue') +
+  theme_minimal() +
+  labs(
+    x = 'R Squared estimate',
+    y = 'Strap Number',
+    title = 'Distribution of R Squared'
+  )
+
+rsquared_dist
+
+hist(bootstrap_results2$r_squared, main = "Distribution of R-squared", xlab = "R-squared", col = "skyblue")
+```
+
+Using the 5000 bootstrap estimates, identify the 2.5% and 97.5% quantiles to provide a 95% confidence interval for r̂ 2 and log(β̂ 0∗β̂ 1). Note: broom::glance() is helpful for extracting r̂ 2 from a fitted regression, and broom::tidy() (with some additional wrangling) should help in computing log(β̂ 1∗β̂ 2).
+
+```{r}
+# Then we can construct the 95% confidence interval
+rsquared_quantile = 
+  bootstrap_results2 |>
+  drop_na()|>
+  summarize(
+    CI_Low = quantile(r_squared, 0.025),
+    CI_High = quantile(r_squared, 0.975)
+  )
+rsquared_quantile
+```
+
+```{r}
+# Then we can construct the 95% confidence interval
+logbeta_quantile = 
+  bootstrap_results2 |>
+  drop_na()|>
+  summarize(
+    CI_Low = quantile(log_beta, 0.025),
+    CI_High = quantile(log_beta, 0.975)
+  )
+logbeta_quantile
+```
+Problem 3
+
+In this problem, you will analyze data gathered to understand the effects of several variables on a child’s birthweight. 
+Load and clean the data for regression analysis (i.e. convert numeric to factor where appropriate, check for missing data, etc.).
+
+```{r}
+birthweight = 
+  read_csv('birthweight.csv') |>
+  janitor::clean_names() |>
+  mutate(
+    babysex = recode(babysex, '1' = 'male', '2' = 'female'),
+    frace = recode(frace, '1' = 'White', '2' = 'Black', '3' = 'Asian', '4' = 'Puerto Rican', '8' = 'Other', '9' = 'Unknown'),
+    mrace = recode(mrace, '1' = 'White', '2' = 'Black', '3' = 'Asian', '4' = 'Puerto Rican', '8' = 'Other'),
+    malform = recode(malform, '0' = 'absent', '1' = 'present')
+  ) |>
+  drop_na()
+
+birthweight
+```
+
+Propose a regression model for birthweight. This model may be based on a hypothesized structure for the factors that underly birthweight, on a data-driven model-building process, or a combination of the two. 
+```{r}
+birthweight_model = lm(bwt ~ babysex + bhead + blength + delwt + fincome + frace + gaweeks +
+                          malform + menarche + mheight + momage + mrace + parity + pnumlbw +
+                          pnumsga + ppbmi + ppwt + smoken + wtgain, data = birthweight)
+birthweight_model
+```
+
+
+Describe your modeling process and show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
+
+```{r}
+birthweight_df = 
+  birthweight |>
+  mutate(
+    fitted_values = as.vector(fitted(birthweight_model)),
+    residuals = as.vector(residuals(birthweight_model)))
+
+birthweight_df
+
+ggplot(birthweight_df, aes(x = fitted_values, y = residuals)) +
+  geom_point(aes(color = "Residuals"), alpha = 0.5) +
+  geom_line(stat = "smooth", method = "lm", se = FALSE, alpha = 1, color = "blue") +
+  theme_minimal() +
+  labs(title = "Residuals vs Fitted Values", x = "Fitted Values", y = "Residuals")
+
+```
+
+
+Compare your model to two others:
+One using length at birth and gestational age as predictors (main effects only)
+```{r}
+# Model with head circumference, length, sex, and all interactions
+model1 <- lm(bwt ~ blength + gaweeks, data = birthweight)
+model1
+```
+One using head circumference, length, sex, and all interactions (including the three-way interaction) between these
+```{r}
+# Model with head circumference, length, sex, and all interactions
+model2 <- lm(bwt ~ bhead + blength + babysex + bhead * blength * babysex, data = birthweight)
+model2
+```
+
+Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
+```{r}
+set.seed(12)
+
+train_df = sample_n(birthweight, 80)
+train_df
+test_df = anti_join(birthweight, train_df)
+test_df
+
+
+rmse_bw_train = rmse(birthweight_model, train_df)
+rmse_bw_test = rmse(birthweight_model, test_df)
+rmse_1_train = rmse(model1, train_df)
+rmse_1_test = rmse(model1, test_df)
+rmse_2_train = rmse(model2, train_df)
+rmse_2_test = rmse(model2, test_df)
+```
+
+
+Note that although we expect your model to be reasonable, model building itself is not a main idea of the course and we don’t necessarily expect your model to be “optimal”.
+
