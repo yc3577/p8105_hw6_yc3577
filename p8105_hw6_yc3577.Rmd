@@ -14,9 +14,8 @@ library(mgcv)
 library(purrr)
 library(dplyr)
 library(stats)
+library(boot)
 ```
-Problem 1
-
 
 ### Problem 1
 
@@ -99,11 +98,11 @@ model_results |>
 model_results
 ```
 
-Problem 2
+### Problem 2
 For this problem, we’ll use the Central Park weather data similar to data we’ve seen elsewhere. The code chunk below (adapted from the course website) will download these data.
 
-First, we need to load in the data. 
 ```{r}
+# First, we need to load in the data. 
 weather_df = 
   rnoaa::meteo_pull_monitors(
     c("USW00094728"),
@@ -180,7 +179,7 @@ beta_dist
 
 hist(bootstrap_results2$log_beta, main = "Distribution of Log beta", xlab = "Log beta", col = "pink")
 ```
-### The distribution of Log_beta is above with Pink histogram and pink density line. It is unimodel. From two graphs, we can see they are left skewed distributed with a long tail on the left. The range is from -14 to -4 and the center of the mode is around -6. This suggests that there are a few samples being strapped having a small product of beta coefficients. 
+- The distribution of Log_beta is above with Pink histogram and pink density line. It is unimodel. From two graphs, we can see they are left skewed distributed with a long tail on the left. The range is from -14 to -4 and the center of the mode is around -6. This suggests that there are a few samples being strapped having a small product of beta coefficients. 
 
 
 
@@ -203,7 +202,7 @@ rsquared_dist
 
 hist(bootstrap_results2$r_squared, main = "Distribution of R-squared", xlab = "R-squared", col = "skyblue")
 ```
-### The distribution of R_squared is above with blue histogram and blue density curve. It is unimodel. From two graphs, we can see they are also left skewed a little with a small tail on the left. But the distribution is closer to normal than the log_beta graph. The range is from 0.86 to 0.95 and the center of the mode is around 0.92.
+- The distribution of R_squared is above with blue histogram and blue density curve. It is unimodel. From two graphs, we can see they are also left skewed a little with a small tail on the left. But the distribution is closer to normal than the log_beta graph. The range is from 0.86 to 0.95 and the center of the mode is around 0.92.
 
 Using the 5000 bootstrap estimates, identify the 2.5% and 97.5% quantiles to provide a 95% confidence interval for r̂ 2 and log(β̂ 0∗β̂ 1). Note: broom::glance() is helpful for extracting r̂ 2 from a fitted regression, and broom::tidy() (with some additional wrangling) should help in computing log(β̂ 1∗β̂ 2).
 
@@ -218,7 +217,7 @@ rsquared_quantile =
   )
 rsquared_quantile
 ```
-### From calculation, the 95% confidence interval for r_squared is (0.8828948, 0.9273118) which means that we have 95 out of 100 times the estimate r_squared will fall between the interval of (0.8828948, 0.9273118).
+- From calculation, the 95% confidence interval for r_squared is (0.8828948, 0.9273118) which means that we have 95 out of 100 times the estimate r_squared will fall between the interval of (0.8828948, 0.9273118).
 
 ```{r}
 # Then we can construct the 95% confidence interval for logbeta
@@ -231,14 +230,15 @@ logbeta_quantile =
   )
 logbeta_quantile
 ```
-### From calculation, the 95% confidence interval for log_(betatmin * betaprcp) is (-8.998584, -4.589433) which means that we have 95 out of 100 times the estimate log_(betatmin * betaprcp) will fall between the interval of (-8.998584, -4.589433).
+- From calculation, the 95% confidence interval for log_(betatmin * betaprcp) is (-8.998584, -4.589433) which means that we have 95 out of 100 times the estimate log_(betatmin * betaprcp) will fall between the interval of (-8.998584, -4.589433).
 
 
 # Problem 3
 
-## In this problem, you will analyze data gathered to understand the effects of several variables on a child’s birthweight. Load and clean the data for regression analysis (i.e. convert numeric to factor where appropriate, check for missing data, etc.).
+In this problem, you will analyze data gathered to understand the effects of several variables on a child’s birthweight. Load and clean the data for regression analysis (i.e. convert numeric to factor where appropriate, check for missing data, etc.).
 
 ```{r}
+# First we need to load in data and clean the table.
 birthweight = 
   read_csv('birthweight.csv') |>
   janitor::clean_names() |>
@@ -251,68 +251,144 @@ birthweight =
   drop_na()
 
 birthweight
+
+# Then we check whether there is na data.
+summary(is.na(birthweight))
 ```
 
-## Propose a regression model for birthweight. This model may be based on a hypothesized structure for the factors that underly birthweight, on a data-driven model-building process, or a combination of the two. 
+Propose a regression model for birthweight. This model may be based on a hypothesized structure for the factors that underly birthweight, on a data-driven model-building process, or a combination of the two. 
 ```{r}
+# Then we propose the regression model for birthweight. 
 birthweight_model = lm(bwt ~ babysex + bhead + blength + delwt + fincome + frace + gaweeks +
                           malform + menarche + mheight + momage + mrace + parity + pnumlbw +
                           pnumsga + ppbmi + ppwt + smoken + wtgain, data = birthweight)
 birthweight_model
+
+# To see the model summary, we can use the summary()
+summary(birthweight_model)
 ```
+- I construct the model by hypothesizing all the babysex + bhead + blength + delwt + fincome + frace + gaweeks + malform + menarche + mheight + momage + mrace + parity + pnumlbw + pnumsga + ppbmi + ppwt + smoken + wtgain are potential factors/ variables in the model, so I include all into the model and show the linear regression on the bwt which is the baby's weight. 
 
 
-## Describe your modeling process and show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
-
+Describe your modeling process and show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
 ```{r}
+# We use add_residuals and add_predictions to the birthweight data.
 birthweight_df = 
   birthweight |>
-  mutate(
-    fitted_values = as.vector(fitted(birthweight_model)),
-    residuals = as.vector(residuals(birthweight_model)))
+  add_predictions(birthweight_model) |>
+  add_residuals(birthweight_model)
 
 birthweight_df
 
-ggplot(birthweight_df, aes(x = fitted_values, y = residuals)) +
-  geom_point(aes(color = "Residuals"), alpha = 0.5) +
+# We can plot the data with predictions and residuals added table.
+resid_bw_plot =
+  ggplot(birthweight_df, aes(x = pred, y = resid)) +
+  geom_point(aes(color = "Resid"), alpha = 0.5) +
   geom_line(stat = "smooth", method = "lm", se = FALSE, alpha = 1, color = "blue") +
   theme_minimal() +
-  labs(title = "Residuals vs Fitted Values", x = "Fitted Values", y = "Residuals")
+  labs(title = "Residuals vs Fitted Values", x = "Predicted Values", y = "Residuals")
 
+resid_bw_plot
+```
+- From the residual plot
+
+```{r}
+# To make sure the value is constant, we need to set the seed.
+set.seed(123)
 ```
 
-
-## Compare your model to two others: One using length at birth and gestational age as predictors (main effects only)
+Compare your model to two others: 
+One using length at birth and gestational age as predictors (main effects only)
 ```{r}
 # Model with head circumference, length, sex, and all interactions
 model1 <- lm(bwt ~ blength + gaweeks, data = birthweight)
 model1
+
+summary(model1)
 ```
-## One using head circumference, length, sex, and all interactions (including the three-way interaction) between these
+One using head circumference, length, sex, and all interactions (including the three-way interaction) between these
 ```{r}
 # Model with head circumference, length, sex, and all interactions
-model2 <- lm(bwt ~ bhead + blength + babysex + bhead * blength * babysex, data = birthweight)
+model2 <- lm(bwt ~ bhead + blength + babysex +
+               bhead * blength + bhead * babysex + blength * babysex, data = birthweight)
 model2
+
+summary(model2)
 ```
 
-## Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
+Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
 ```{r}
-set.seed(12)
+set.seed(123)
 
-train_df = sample_n(birthweight, 80)
-train_df
-test_df = anti_join(birthweight, train_df)
-test_df
+# Set train and test data with sample_n()
+train = sample_n(birthweight, 80)
+train
+test = anti_join(birthweight, train)
+test
+
+# We use crossv_mc for training / testing split multiple times, a stores the datasets using list columns.
+
+cv_df0 =
+  crossv_mc(birthweight, n = 100) 
 
 
-rmse_bw_train = rmse(birthweight_model, train_df)
-rmse_bw_test = rmse(birthweight_model, test_df)
-rmse_1_train = rmse(model1, train_df)
-rmse_1_test = rmse(model1, test_df)
-rmse_2_train = rmse(model2, train_df)
-rmse_2_test = rmse(model2, test_df)
+cv_train = 
+  cv_df0 |> 
+  pull(train) |> 
+  nth(1) |> 
+  as_tibble()
+
+cv_train
+
+cv_test =
+  cv_df0 |> 
+  pull(test) |> 
+  nth(1) |> 
+  as_tibble()
+
+cv_test
+
+
+cv_df1 =
+  cv_df0 |> 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble))
+
+
 ```
+```{r}
+# Now we have the train and test datasets, so we can fit 3 models above and assess prediction accuracy. We will fit the models and obtain RMSEs with mutate() along with map() and map2_dbl().
 
+cv_df2 = 
+  cv_df1 |> 
+  mutate(
+    birthweight_model  = map(train, \(df) birthweight_model),
+    model1  = map(train, \(df) model1),
+    model2  = map(train, \(df) model2) )|> 
+  mutate(
+    rmse_bwmodel = map2_dbl(birthweight_model, test, \(mod, df) rmse(model = mod, data = df)),
+    rmse_model1 = map2_dbl(model1, test, \(mod, df) rmse(model = mod, data = df)),
+    rmse_model2 = map2_dbl(model2, test, \(mod, df) rmse(model = mod, data = df)))
 
-## Note that although we expect your model to be reasonable, model building itself is not a main idea of the course and we don’t necessarily expect your model to be “optimal”.
+cv_df2
+```
+```{r}
+# Finally, we will focus on the RMSE to visualize and compare the models. We can see the distribution of RMSE values for each model.
+cv_violine_plot =
+  cv_df2 |> 
+  select(starts_with("rmse")) |> 
+  pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_") |> 
+  mutate(model = fct_inorder(model)) |> 
+  ggplot(aes(x = rmse, y = model)) + 
+  geom_violin(fill = 'pink') +
+  geom_boxplot(width = 0.2) +
+  theme_minimal()
+
+cv_violine_plot
+```
 
