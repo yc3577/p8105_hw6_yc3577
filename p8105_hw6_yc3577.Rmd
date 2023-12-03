@@ -172,7 +172,7 @@ beta_dist =
   theme_minimal() +
   labs(
     x = 'Log Beta estimate',
-    y = 'Strap Number',
+    y = 'Frequency',
     title = 'Distribution of Log beta'
   )
 
@@ -180,7 +180,7 @@ beta_dist
 
 hist(bootstrap_results2$log_beta, main = "Distribution of Log beta", xlab = "Log beta", col = "pink")
 ```
-# The distribution of Log_beta is above with Pink histogram and pink density line. From two graphs, we can see they are left skewed distributed with a long tail on the left. The range is from -14 to -4 and the center of the mode is around -6.
+# The distribution of Log_beta is above with Pink histogram and pink density line. It is unimodel. From two graphs, we can see they are left skewed distributed with a long tail on the left. The range is from -14 to -4 and the center of the mode is around -6. This suggests that there are a few samples being strapped having a small product of beta coefficients. 
 
 
 
@@ -195,7 +195,7 @@ rsquared_dist =
   theme_minimal() +
   labs(
     x = 'R Squared estimate',
-    y = 'Strap Number',
+    y = 'Frequency',
     title = 'Distribution of R Squared'
   )
 
@@ -203,12 +203,12 @@ rsquared_dist
 
 hist(bootstrap_results2$r_squared, main = "Distribution of R-squared", xlab = "R-squared", col = "skyblue")
 ```
-# The distribution of R_squared is above with blue histogram and blue density curve. From two graphs, we can see they are left skewed distributed with a long tail on the left. The range is from -14 to -4 and the center of the mode is around -6.
+# The distribution of R_squared is above with blue histogram and blue density curve. It is unimodel. From two graphs, we can see they are also left skewed a little with a small tail on the left. But the distribution is closer to normal than the log_beta graph. The range is from 0.86 to 0.95 and the center of the mode is around 0.92.
 
 Using the 5000 bootstrap estimates, identify the 2.5% and 97.5% quantiles to provide a 95% confidence interval for r̂ 2 and log(β̂ 0∗β̂ 1). Note: broom::glance() is helpful for extracting r̂ 2 from a fitted regression, and broom::tidy() (with some additional wrangling) should help in computing log(β̂ 1∗β̂ 2).
 
 ```{r}
-# Then we can construct the 95% confidence interval
+# Then we can construct the 95% confidence interval for rsquared
 rsquared_quantile = 
   bootstrap_results2 |>
   drop_na()|>
@@ -218,9 +218,10 @@ rsquared_quantile =
   )
 rsquared_quantile
 ```
+# From calculation, the 95% confidence interval for r_squared is (0.8828948, 0.9273118) which means that we have 95 out of 100 times the estimate r_squared will fall between the interval of (0.8828948, 0.9273118).
 
 ```{r}
-# Then we can construct the 95% confidence interval
+# Then we can construct the 95% confidence interval for logbeta
 logbeta_quantile = 
   bootstrap_results2 |>
   drop_na()|>
@@ -230,6 +231,9 @@ logbeta_quantile =
   )
 logbeta_quantile
 ```
+# From calculation, the 95% confidence interval for log_(betatmin * betaprcp) is (-8.998584, -4.589433) which means that we have 95 out of 100 times the estimate log_(betatmin * betaprcp) will fall between the interval of (-8.998584, -4.589433).
+
+
 Problem 3
 
 In this problem, you will analyze data gathered to understand the effects of several variables on a child’s birthweight. 
