@@ -268,7 +268,7 @@ birthweight_model
 summary(birthweight_model)
 ```
 - I construct the model by hypothesizing all the babysex + bhead + blength + delwt + fincome + frace + gaweeks + malform + menarche + mheight + momage + mrace + parity + pnumlbw + pnumsga + ppbmi + ppwt + smoken + wtgain are potential factors/ variables in the model, so I include all into the model and show the linear regression on the bwt which is the baby's weight. 
-
+- From the model summary, we can see that smoken，parity，gaweeks，delwt，blength，and bhead all have p-value smaller than 0.05 which is significant factor for the model prediction, while other estimates have higher than 0.5 p-value indicating no significant correlation to the baby's weight. Therefore, for model modification, we can leave the significant variable and deduct the insignificant variables. 
 
 Describe your modeling process and show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
 ```{r}
@@ -290,7 +290,8 @@ resid_bw_plot =
 
 resid_bw_plot
 ```
-- From the residual plot
+- From the residual plot, we can see the distribution of residuals over predicted values for original birthweight model that the predicted values concentrated around 3000 and ranges from 1000 to 4000 with residuals centered at 0 and ranges from -1000 to 1000. There are several single values from 1000 to 2000 for the predicted values, it means that there is a left tail that has extreme low predicted values. 
+
 
 ```{r}
 # To make sure the value is constant, we need to set the seed.
@@ -391,4 +392,4 @@ cv_violine_plot =
 
 cv_violine_plot
 ```
-
+- From the violin and box plot, we can see that the original birthweight model has the smallest rmse around 275 and it has the smallest range from 255 to 295, and model1 has the largest rmse around 325 and longest tail of range from 310 to 365, and model2 has a rmse around 287.5 which is much closer to original birthweight model with a spread from 270 to 312.5. In order to have a good fit, we need to make sure it has a small rmse along with more concentrated shorter spread, so all in all original birthweight model with most variables included is the best model for the prediction. It is logical since we include more factors, the model maybe more precise with lower rmse. 
