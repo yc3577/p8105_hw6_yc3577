@@ -180,7 +180,7 @@ beta_dist
 
 hist(bootstrap_results2$log_beta, main = "Distribution of Log beta", xlab = "Log beta", col = "pink")
 ```
-# The distribution of Log_beta is above with Pink histogram and pink density line. It is unimodel. From two graphs, we can see they are left skewed distributed with a long tail on the left. The range is from -14 to -4 and the center of the mode is around -6. This suggests that there are a few samples being strapped having a small product of beta coefficients. 
+### The distribution of Log_beta is above with Pink histogram and pink density line. It is unimodel. From two graphs, we can see they are left skewed distributed with a long tail on the left. The range is from -14 to -4 and the center of the mode is around -6. This suggests that there are a few samples being strapped having a small product of beta coefficients. 
 
 
 
@@ -203,7 +203,7 @@ rsquared_dist
 
 hist(bootstrap_results2$r_squared, main = "Distribution of R-squared", xlab = "R-squared", col = "skyblue")
 ```
-# The distribution of R_squared is above with blue histogram and blue density curve. It is unimodel. From two graphs, we can see they are also left skewed a little with a small tail on the left. But the distribution is closer to normal than the log_beta graph. The range is from 0.86 to 0.95 and the center of the mode is around 0.92.
+### The distribution of R_squared is above with blue histogram and blue density curve. It is unimodel. From two graphs, we can see they are also left skewed a little with a small tail on the left. But the distribution is closer to normal than the log_beta graph. The range is from 0.86 to 0.95 and the center of the mode is around 0.92.
 
 Using the 5000 bootstrap estimates, identify the 2.5% and 97.5% quantiles to provide a 95% confidence interval for r̂ 2 and log(β̂ 0∗β̂ 1). Note: broom::glance() is helpful for extracting r̂ 2 from a fitted regression, and broom::tidy() (with some additional wrangling) should help in computing log(β̂ 1∗β̂ 2).
 
@@ -218,7 +218,7 @@ rsquared_quantile =
   )
 rsquared_quantile
 ```
-# From calculation, the 95% confidence interval for r_squared is (0.8828948, 0.9273118) which means that we have 95 out of 100 times the estimate r_squared will fall between the interval of (0.8828948, 0.9273118).
+### From calculation, the 95% confidence interval for r_squared is (0.8828948, 0.9273118) which means that we have 95 out of 100 times the estimate r_squared will fall between the interval of (0.8828948, 0.9273118).
 
 ```{r}
 # Then we can construct the 95% confidence interval for logbeta
@@ -231,13 +231,12 @@ logbeta_quantile =
   )
 logbeta_quantile
 ```
-# From calculation, the 95% confidence interval for log_(betatmin * betaprcp) is (-8.998584, -4.589433) which means that we have 95 out of 100 times the estimate log_(betatmin * betaprcp) will fall between the interval of (-8.998584, -4.589433).
+### From calculation, the 95% confidence interval for log_(betatmin * betaprcp) is (-8.998584, -4.589433) which means that we have 95 out of 100 times the estimate log_(betatmin * betaprcp) will fall between the interval of (-8.998584, -4.589433).
 
 
-Problem 3
+# Problem 3
 
-In this problem, you will analyze data gathered to understand the effects of several variables on a child’s birthweight. 
-Load and clean the data for regression analysis (i.e. convert numeric to factor where appropriate, check for missing data, etc.).
+## In this problem, you will analyze data gathered to understand the effects of several variables on a child’s birthweight. Load and clean the data for regression analysis (i.e. convert numeric to factor where appropriate, check for missing data, etc.).
 
 ```{r}
 birthweight = 
@@ -254,7 +253,7 @@ birthweight =
 birthweight
 ```
 
-Propose a regression model for birthweight. This model may be based on a hypothesized structure for the factors that underly birthweight, on a data-driven model-building process, or a combination of the two. 
+## Propose a regression model for birthweight. This model may be based on a hypothesized structure for the factors that underly birthweight, on a data-driven model-building process, or a combination of the two. 
 ```{r}
 birthweight_model = lm(bwt ~ babysex + bhead + blength + delwt + fincome + frace + gaweeks +
                           malform + menarche + mheight + momage + mrace + parity + pnumlbw +
@@ -263,7 +262,7 @@ birthweight_model
 ```
 
 
-Describe your modeling process and show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
+## Describe your modeling process and show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
 
 ```{r}
 birthweight_df = 
@@ -283,21 +282,20 @@ ggplot(birthweight_df, aes(x = fitted_values, y = residuals)) +
 ```
 
 
-Compare your model to two others:
-One using length at birth and gestational age as predictors (main effects only)
+## Compare your model to two others: One using length at birth and gestational age as predictors (main effects only)
 ```{r}
 # Model with head circumference, length, sex, and all interactions
 model1 <- lm(bwt ~ blength + gaweeks, data = birthweight)
 model1
 ```
-One using head circumference, length, sex, and all interactions (including the three-way interaction) between these
+## One using head circumference, length, sex, and all interactions (including the three-way interaction) between these
 ```{r}
 # Model with head circumference, length, sex, and all interactions
 model2 <- lm(bwt ~ bhead + blength + babysex + bhead * blength * babysex, data = birthweight)
 model2
 ```
 
-Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
+## Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
 ```{r}
 set.seed(12)
 
@@ -316,5 +314,5 @@ rmse_2_test = rmse(model2, test_df)
 ```
 
 
-Note that although we expect your model to be reasonable, model building itself is not a main idea of the course and we don’t necessarily expect your model to be “optimal”.
+## Note that although we expect your model to be reasonable, model building itself is not a main idea of the course and we don’t necessarily expect your model to be “optimal”.
 
